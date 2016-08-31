@@ -154,6 +154,7 @@ define(function() {
   };
 
   Squire.prototype.require = function(dependencies, callback, errback) {
+    var __st = performance.now();
     var magicModuleName = 'mocks';
     var self = this;
     var path, magicModuleLocation;
@@ -185,7 +186,7 @@ define(function() {
       }
 
       window.__sq_perf[self.id] = performance.now() - __st;
-
+      console.log('|Squire|', self.id, 'resolved in', window.__sq_perf[self.id]);
       callback.apply(null, args);
 
       each(self.requiredCallbacks, function(cb) {
