@@ -103,6 +103,8 @@ define(function() {
 
     this.id = uniqueId();
 
+    window.__sq_perf[this.id] = {};
+
     // Default the context
     if (typeof context === 'undefined') {
       context = '_'; // Default require.js context
@@ -154,10 +156,22 @@ define(function() {
   };
 
   Squire.prototype.require = function(dependencies, callback, errback) {
-    var __st = performance.now();
+    function __getCaller(stack) {
+      if(!stack) {
+        return self.id;
+      }
+      var testFrame = stack.split('\n').filter(function(line) { return line.indexOf('test/spec') >=0; })[0];
+      if(!testFrame) {
+        return self.id;
+      }
+      return /.*test\/spec(.*.js)/.exec(testFrame)[1] || self.id;
+    }
+
     var magicModuleName = 'mocks';
     var self = this;
     var path, magicModuleLocation;
+    window.__sq_perf[self.id].caller = __getCaller(new Error().stack);
+    var __st = performance.now();
 
     magicModuleLocation = indexOf(dependencies, magicModuleName);
 
@@ -185,8 +199,9 @@ define(function() {
         });
       }
 
-      window.__sq_perf[self.id] = performance.now() - __st;
-      console.log('|Squire|', self.id, 'resolved in', window.__sq_perf[self.id]);
+      window.__sq_perf[self.id].req = Math.round(performance.now() - __st);
+      // window.__sq_perf[self.id].def = Object.keys(getContext(self.id).defined);
+      console.log('|Squire|', window.__sq_perf[self.id].caller, self.id, window.__sq_perf[self.id].req);
       callback.apply(null, args);
 
       each(self.requiredCallbacks, function(cb) {
